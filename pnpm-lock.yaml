@@ -194,6 +194,9 @@ importers:
       three:
         specifier: latest
         version: 0.179.1
+      three-stdlib:
+        specifier: 2.33.0
+        version: 2.33.0(three@0.179.1)
       use-sync-external-store:
         specifier: latest
         version: 1.5.0(react@18.0.0)
@@ -4717,6 +4720,11 @@ packages:
     resolution: {integrity: sha512-4G5lBaF+g2auKX3P0yqx+MJC6oVt6sB5k+CchS6Ob0qvH0YIhuUk1eYr7ktsIpY+albCqE80/FVQGV190PmiAg==}
     peerDependencies:
       three: '>= 0.159.0'
+
+  three-stdlib@2.33.0:
+    resolution: {integrity: sha512-V/uycBuqQOP/3Z+FBtpMdj2Ds5PyfJ3VDfMzktEmG4niOIzv7q1y5uMSbMcng0+057m1l0N147FQxsodQo9zBg==}
+    peerDependencies:
+      three: '>=0.128.0'
 
   three-stdlib@2.36.0:
     resolution: {integrity: sha512-kv0Byb++AXztEGsULgMAs8U2jgUdz6HPpAB/wDJnLiLlaWQX2APHhiTJIN7rqW+Of0eRgcp7jn05U1BsCP3xBA==}
@@ -10018,6 +10026,16 @@ snapshots:
 
   three-mesh-bvh@0.8.3(three@0.179.1):
     dependencies:
+      three: 0.179.1
+
+  three-stdlib@2.33.0(three@0.179.1):
+    dependencies:
+      '@types/draco3d': 1.4.10
+      '@types/offscreencanvas': 2019.7.3
+      '@types/webxr': 0.5.23
+      draco3d: 1.5.7
+      fflate: 0.6.10
+      potpack: 1.0.2
       three: 0.179.1
 
   three-stdlib@2.36.0(three@0.179.1):

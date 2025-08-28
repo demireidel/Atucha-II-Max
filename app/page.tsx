@@ -61,7 +61,8 @@ export default function AtucharIIVisualization() {
     ? Math.min(qualityLevel >= 3 ? 2048 : qualityLevel >= 2 ? 1024 : 512, webglCapabilities.maxTextureSize / 2)
     : 512
 
-  const pixelRatio = Math.min(qualityLevel >= 4 ? 2 : 1, window.devicePixelRatio || 1)
+  const pixelRatio =
+    typeof window !== "undefined" ? Math.min(qualityLevel >= 4 ? 2 : 1, window.devicePixelRatio || 1) : 1
 
   return (
     <WebGLDetector onCapabilitiesDetected={handleCapabilitiesDetected}>
@@ -140,7 +141,8 @@ export default function AtucharIIVisualization() {
                         position={[100, 100, 50]}
                         intensity={1}
                         castShadow
-                        shadow-mapSize={[shadowMapSize, shadowMapSize]}
+                        shadow-mapSize-width={shadowMapSize}
+                        shadow-mapSize-height={shadowMapSize}
                         shadow-camera-far={200}
                         shadow-camera-left={-50}
                         shadow-camera-right={50}
@@ -178,7 +180,7 @@ export default function AtucharIIVisualization() {
                       minDistance={10}
                       maxDistance={200}
                       maxPolarAngle={Math.PI / 2}
-                      enabled={!tourActive && window.innerWidth >= 768}
+                      enabled={!tourActive && (typeof window !== "undefined" ? window.innerWidth >= 768 : true)}
                     />
 
                     {/* Performance Monitor */}
