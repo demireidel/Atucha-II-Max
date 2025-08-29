@@ -32,36 +32,70 @@ export function WebGLDetector({ onCapabilitiesDetected, children }: WebGLDetecto
       try {
         // Test WebGL 1.0
         const canvas = document.createElement("canvas")
-        const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl")
+        const gl =
+          canvas.getContext("webgl", {
+            failIfMajorPerformanceCaveat: false,
+            antialias: false,
+            alpha: false,
+            depth: true,
+            stencil: false,
+            preserveDrawingBuffer: false,
+          }) || canvas.getContext("experimental-webgl")
 
         if (!gl) {
           throw new Error("WebGL is not supported")
         }
 
-        // Test WebGL 2.0
-        const gl2 = canvas.getContext("webgl2")
+        const checkContextReady = () => {
+          try {
+            // Test if gl.getParameter is available
+            if (typeof gl.getParameter !== "function") {
+              throw new Error("WebGL context not fully initialized")
+            }
 
-        // Get capabilities
-        const caps: WebGLCapabilities = {
-          webgl: !!gl,
-          webgl2: !!gl2,
-          maxTextureSize: gl.getParameter(gl.MAX_TEXTURE_SIZE),
-          maxRenderbufferSize: gl.getParameter(gl.MAX_RENDERBUFFER_SIZE),
-          maxVertexUniforms: gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS),
-          maxFragmentUniforms: gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS),
-          extensions: gl.getSupportedExtensions() || [],
+            // Test WebGL 2.0
+            const gl2 = canvas.getContext("webgl2")
+
+            // Get capabilities with error handling for each parameter
+            const caps: WebGLCapabilities = {
+              webgl: !!gl,
+              webgl2: !!gl2,
+              maxTextureSize: gl.getParameter(gl.MAX_TEXTURE_SIZE) || 1024,
+              maxRenderbufferSize: gl.getParameter(gl.MAX_RENDERBUFFER_SIZE) || 1024,
+              maxVertexUniforms: gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS) || 128,
+              maxFragmentUniforms: gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS) || 128,
+              extensions: gl.getSupportedExtensions() || [],
+            }
+
+            // Check for minimum requirements
+            if (caps.maxTextureSize < 1024) {
+              throw new Error("Graphics hardware does not meet minimum requirements")
+            }
+
+            setCapabilities(caps)
+            onCapabilitiesDetected(caps)
+
+            setTimeout(() => canvas.remove(), 100)
+          } catch (contextError) {
+            console.error("[v0] WebGL context error:", contextError)
+            throw contextError
+          }
         }
 
-        // Check for minimum requirements
-        if (caps.maxTextureSize < 1024) {
-          throw new Error("Graphics hardware does not meet minimum requirements")
-        }
-
-        setCapabilities(caps)
-        onCapabilitiesDetected(caps)
-
-        // Cleanup
-        canvas.remove()
+        requestAnimationFrame(() => {
+          try {
+            checkContextReady()
+          } catch (contextError) {
+            setTimeout(() => {
+              try {
+                checkContextReady()
+              } catch (finalError) {
+                setError(finalError instanceof Error ? finalError.message : "WebGL context initialization failed")
+                canvas.remove()
+              }
+            }, 100)
+          }
+        })
       } catch (err) {
         console.error("[v0] WebGL detection failed:", err)
         setError(err instanceof Error ? err.message : "Unknown WebGL error")
