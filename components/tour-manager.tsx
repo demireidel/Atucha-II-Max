@@ -1,14 +1,12 @@
 "use client"
 
 import { useEffect } from "react"
-import { useThree } from "@react-three/fiber"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { useNuclearStore } from "@/lib/store"
-import { Vector3 } from "three"
 
 const tourSteps = [
   {
@@ -68,7 +66,6 @@ const tourSteps = [
 ]
 
 export function TourManager() {
-  const { camera } = useThree()
   const { tourActive, tourStep, nextTourStep, endTour, setView } = useNuclearStore()
 
   const currentStep = tourSteps[tourStep] || tourSteps[0]
@@ -76,26 +73,18 @@ export function TourManager() {
 
   useEffect(() => {
     if (tourActive && currentStep) {
-      // Animate camera to tour position
-      const targetPosition = new Vector3(...currentStep.cameraPosition)
-      const targetLookAt = new Vector3(...currentStep.cameraTarget)
-
       // Set view
       setView(currentStep.view)
 
-      // Smooth camera animation (simplified)
-      const animateCamera = () => {
-        camera.position.lerp(targetPosition, 0.05)
-        camera.lookAt(targetLookAt)
-
-        if (camera.position.distanceTo(targetPosition) > 1) {
-          requestAnimationFrame(animateCamera)
-        }
-      }
-
-      animateCamera()
+      // Store camera target in store for the 3D component to use
+      useNuclearStore.setState({
+        tourCameraTarget: {
+          position: currentStep.cameraPosition,
+          target: currentStep.cameraTarget,
+        },
+      })
     }
-  }, [tourActive, tourStep, camera, currentStep, setView])
+  }, [tourActive, tourStep, currentStep, setView])
 
   if (!tourActive) return null
 

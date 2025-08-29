@@ -9,6 +9,11 @@ interface PerformanceMetrics {
   objects: number
 }
 
+interface TourCameraTarget {
+  position: [number, number, number]
+  target: [number, number, number]
+}
+
 interface NuclearStore {
   // Simulation state
   isPlaying: boolean
@@ -23,6 +28,7 @@ interface NuclearStore {
   currentView: "overview" | "reactor" | "control-room"
   tourActive: boolean
   tourStep: number
+  tourCameraTarget: TourCameraTarget | null
 
   // Performance settings
   qualityLevel: number // 1-4 (Low, Medium, High, Ultra)
@@ -63,6 +69,7 @@ export const useNuclearStore = create<NuclearStore>((set, get) => ({
   currentView: "overview",
   tourActive: false,
   tourStep: 0,
+  tourCameraTarget: null,
 
   // Performance settings
   qualityLevel: 3, // High by default
@@ -89,7 +96,7 @@ export const useNuclearStore = create<NuclearStore>((set, get) => ({
   setView: (view) => set({ currentView: view }),
   startTour: () => set({ tourActive: true, tourStep: 0 }),
   nextTourStep: () => set((state) => ({ tourStep: state.tourStep + 1 })),
-  endTour: () => set({ tourActive: false, tourStep: 0 }),
+  endTour: () => set({ tourActive: false, tourStep: 0, tourCameraTarget: null }),
 
   setQualityLevel: (level) => set({ qualityLevel: level }),
   setEnableShadows: (enabled) => set({ enableShadows: enabled }),

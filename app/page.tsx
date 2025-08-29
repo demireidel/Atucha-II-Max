@@ -77,6 +77,14 @@ const PerformanceMonitor = dynamic(
   },
 )
 
+const TourCameraController = dynamic(
+  () => import("@/components/tour-camera-controller").then((mod) => ({ default: mod.TourCameraController })),
+  {
+    ssr: false,
+    loading: () => null,
+  },
+)
+
 interface WebGLCapabilities {
   webgl: boolean
   webgl2: boolean
@@ -252,6 +260,8 @@ export default function AtucharIIVisualization() {
 
                     {/* Interactive Elements and Hotspots */}
                     {!tourActive && <InteractiveElements />}
+
+                    <TourCameraController />
 
                     <TouchControls />
                     <OrbitControls
