@@ -214,11 +214,6 @@ export default function AtucharIIVisualization() {
                     preserveDrawingBuffer: false,
                     stencil: false,
                   }}
-                  onCreated={({ gl }) => {
-                    console.log("[v0] WebGL context created successfully with R3F 8.17.10")
-                    console.log("[v0] Renderer info:", gl.getParameter(gl.RENDERER))
-                    console.log("[v0] WebGL version:", gl.getParameter(gl.VERSION))
-                  }}
                 >
                   <Suspense fallback={null}>
                     <Preload all />
