@@ -20,12 +20,12 @@ export function ReactorCore({ position = [0, 0, 0], scale = 1 }: ReactorCoreProp
     return () => {
       // Cleanup geometries and materials on unmount
       meshRefs.current.forEach((mesh) => {
-        if (mesh.geometry) {
+        if (mesh?.geometry) {
           mesh.geometry.dispose()
         }
-        if (mesh.material) {
+        if (mesh?.material) {
           if (Array.isArray(mesh.material)) {
-            mesh.material.forEach((material) => material.dispose())
+            mesh.material.forEach((material) => material?.dispose())
           } else {
             mesh.material.dispose()
           }
@@ -56,10 +56,10 @@ export function ReactorCore({ position = [0, 0, 0], scale = 1 }: ReactorCoreProp
         const flux = Math.max(0, 1 - distanceFromCenter / 12) // Peak flux at center
 
         tubes.push({
-          position: new Vector3(colOffset, 0, rowOffset),
+          position: new Vector3(isNaN(colOffset) ? 0 : colOffset, 0, isNaN(rowOffset) ? 0 : rowOffset),
           id: tubeId++,
-          temperature,
-          flux,
+          temperature: isNaN(temperature) ? 280 : temperature,
+          flux: isNaN(flux) ? 0 : flux,
         })
       }
     }
@@ -67,6 +67,9 @@ export function ReactorCore({ position = [0, 0, 0], scale = 1 }: ReactorCoreProp
   }, [])
 
   const controlRods = useMemo(() => {
+    if (!pressureTubes || pressureTubes.length === 0) {
+      return []
+    }
     return pressureTubes.filter((_, index) => index % 12 === 0).slice(0, 37) // Atucha II has 37 control rods
   }, [pressureTubes])
 
@@ -78,7 +81,7 @@ export function ReactorCore({ position = [0, 0, 0], scale = 1 }: ReactorCoreProp
 
       // Animate neutron flux visualization
       meshRefs.current.forEach((mesh, index) => {
-        if (mesh.material && "emissiveIntensity" in mesh.material) {
+        if (mesh?.material && typeof mesh.material === "object" && "emissiveIntensity" in mesh.material) {
           const baseIntensity = 0.1
           const fluxVariation = Math.sin(state.clock.elapsedTime * 2 + index * 0.1) * 0.05
           mesh.material.emissiveIntensity = baseIntensity + fluxVariation
@@ -91,6 +94,16 @@ export function ReactorCore({ position = [0, 0, 0], scale = 1 }: ReactorCoreProp
     if (mesh && !meshRefs.current.includes(mesh)) {
       meshRefs.current.push(mesh)
     }
+  }
+
+  if (!pressureTubes || pressureTubes.length === 0) {
+    return (
+      <group position={position} scale={scale}>
+        <Text position={[0, 0, 0]} fontSize={1} color="#ef4444" anchorX="center" anchorY="middle">
+          Loading Reactor Core...
+        </Text>
+      </group>
+    )
   }
 
   return (
@@ -143,159 +156,145 @@ export function ReactorCore({ position = [0, 0, 0], scale = 1 }: ReactorCoreProp
         })}
       </group>
 
-      {pressureTubes.map((tube) => (
-        <group key={tube.id} position={tube.position.toArray()}>
-          {/* Calandria tube (surrounds pressure tube) */}
-          <Cylinder ref={addMeshRef} args={[0.13, 0.13, 6.2, 24]} rotation={[0, 0, Math.PI / 2]} castShadow>
-            <meshStandardMaterial color="#9ca3af" metalness={0.7} roughness={0.3} transparent opacity={0.8} />
-          </Cylinder>
+      {pressureTubes.map((tube) => {
+        if (!tube?.position) return null
 
-          {/* Pressure tube (Zircaloy-4) */}
-          <Cylinder ref={addMeshRef} args={[0.11, 0.11, 6, 24]} rotation={[0, 0, Math.PI / 2]} castShadow>
-            <meshStandardMaterial
-              color="#fbbf24"
-              metalness={0.85}
-              roughness={0.15}
-              emissive="#f59e0b"
-              emissiveIntensity={tube.flux * 0.1}
-            />
-          </Cylinder>
+        const tubePosition = tube.position.toArray ? tube.position.toArray() : [0, 0, 0]
 
-          {/* Fuel bundles with individual fuel rods */}
-          {Array.from({ length: 12 }, (_, bundleIndex) => (
-            <group key={bundleIndex} position={[-2.5 + bundleIndex * 0.42, 0, 0]}>
-              {/* Central fuel rod */}
-              <Cylinder ref={addMeshRef} args={[0.006, 0.006, 0.4, 8]} rotation={[0, 0, Math.PI / 2]}>
-                <meshStandardMaterial
-                  color="#dc2626"
-                  metalness={0.6}
-                  roughness={0.4}
-                  emissive="#991b1b"
-                  emissiveIntensity={tube.flux * 0.3}
-                />
-              </Cylinder>
+        return (
+          <group key={tube.id} position={tubePosition}>
+            {/* Calandria tube (surrounds pressure tube) */}
+            <Cylinder ref={addMeshRef} args={[0.13, 0.13, 6.2, 24]} rotation={[0, 0, Math.PI / 2]} castShadow>
+              <meshStandardMaterial color="#9ca3af" metalness={0.7} roughness={0.3} transparent opacity={0.8} />
+            </Cylinder>
 
-              {/* Ring of 6 fuel rods around center */}
-              {Array.from({ length: 6 }, (_, rodIndex) => {
-                const angle = (rodIndex / 6) * Math.PI * 2
-                const rodRadius = 0.015
-                return (
-                  <Cylinder
-                    key={rodIndex}
-                    ref={addMeshRef}
-                    args={[0.006, 0.006, 0.4, 8]}
-                    position={[0, Math.cos(angle) * rodRadius, Math.sin(angle) * rodRadius]}
-                    rotation={[0, 0, Math.PI / 2]}
-                  >
-                    <meshStandardMaterial
-                      color="#dc2626"
-                      metalness={0.6}
-                      roughness={0.4}
-                      emissive="#991b1b"
-                      emissiveIntensity={tube.flux * 0.3}
-                    />
-                  </Cylinder>
-                )
-              })}
+            {/* Pressure tube (Zircaloy-4) */}
+            <Cylinder ref={addMeshRef} args={[0.11, 0.11, 6, 24]} rotation={[0, 0, Math.PI / 2]} castShadow>
+              <meshStandardMaterial
+                color="#fbbf24"
+                metalness={0.85}
+                roughness={0.15}
+                emissive="#f59e0b"
+                emissiveIntensity={tube.flux * 0.1}
+              />
+            </Cylinder>
 
-              {/* Outer ring of 12 fuel rods */}
-              {Array.from({ length: 12 }, (_, rodIndex) => {
-                const angle = (rodIndex / 12) * Math.PI * 2
-                const rodRadius = 0.03
-                return (
-                  <Cylinder
-                    key={`outer-${rodIndex}`}
-                    ref={addMeshRef}
-                    args={[0.006, 0.006, 0.4, 8]}
-                    position={[0, Math.cos(angle) * rodRadius, Math.sin(angle) * rodRadius]}
-                    rotation={[0, 0, Math.PI / 2]}
-                  >
-                    <meshStandardMaterial
-                      color="#dc2626"
-                      metalness={0.6}
-                      roughness={0.4}
-                      emissive="#991b1b"
-                      emissiveIntensity={tube.flux * 0.3}
-                    />
-                  </Cylinder>
-                )
-              })}
+            {/* Fuel bundles with individual fuel rods */}
+            {Array.from({ length: 12 }, (_, bundleIndex) => (
+              <group key={bundleIndex} position={[-2.5 + bundleIndex * 0.42, 0, 0]}>
+                {/* Central fuel rod */}
+                <Cylinder ref={addMeshRef} args={[0.006, 0.006, 0.4, 8]} rotation={[0, 0, Math.PI / 2]}>
+                  <meshStandardMaterial
+                    color="#dc2626"
+                    metalness={0.6}
+                    roughness={0.4}
+                    emissive="#991b1b"
+                    emissiveIntensity={tube.flux * 0.3}
+                  />
+                </Cylinder>
 
-              {/* Spacer grids */}
-              <Torus ref={addMeshRef} args={[0.04, 0.002, 8, 16]} rotation={[Math.PI / 2, 0, 0]}>
-                <meshStandardMaterial color="#6b7280" metalness={0.8} roughness={0.2} />
-              </Torus>
-            </group>
-          ))}
+                {/* Ring of 6 fuel rods around center */}
+                {Array.from({ length: 6 }, (_, rodIndex) => {
+                  const angle = (rodIndex / 6) * Math.PI * 2
+                  const rodRadius = 0.015
+                  return (
+                    <Cylinder
+                      key={rodIndex}
+                      ref={addMeshRef}
+                      args={[0.006, 0.006, 0.4, 8]}
+                      position={[0, Math.cos(angle) * rodRadius, Math.sin(angle) * rodRadius]}
+                      rotation={[0, 0, Math.PI / 2]}
+                    >
+                      <meshStandardMaterial
+                        color="#dc2626"
+                        metalness={0.6}
+                        roughness={0.4}
+                        emissive="#991b1b"
+                        emissiveIntensity={tube.flux * 0.3}
+                      />
+                    </Cylinder>
+                  )
+                })}
 
-          {/* Pressure tube end fittings */}
-          <Cylinder
-            ref={addMeshRef}
-            args={[0.15, 0.11, 0.3, 16]}
-            position={[-3.15, 0, 0]}
-            rotation={[0, 0, Math.PI / 2]}
-          >
-            <meshStandardMaterial color="#374151" metalness={0.9} roughness={0.1} />
-          </Cylinder>
-          <Cylinder
-            ref={addMeshRef}
-            args={[0.15, 0.11, 0.3, 16]}
-            position={[3.15, 0, 0]}
-            rotation={[0, 0, Math.PI / 2]}
-          >
-            <meshStandardMaterial color="#374151" metalness={0.9} roughness={0.1} />
-          </Cylinder>
+                {/* Outer ring of 12 fuel rods */}
+                {Array.from({ length: 12 }, (_, rodIndex) => {
+                  const angle = (rodIndex / 12) * Math.PI * 2
+                  const rodRadius = 0.03
+                  return (
+                    <Cylinder
+                      key={`outer-${rodIndex}`}
+                      ref={addMeshRef}
+                      args={[0.006, 0.006, 0.4, 8]}
+                      position={[0, Math.cos(angle) * rodRadius, Math.sin(angle) * rodRadius]}
+                      rotation={[0, 0, Math.PI / 2]}
+                    >
+                      <meshStandardMaterial
+                        color="#dc2626"
+                        metalness={0.6}
+                        roughness={0.4}
+                        emissive="#991b1b"
+                        emissiveIntensity={tube.flux * 0.3}
+                      />
+                    </Cylinder>
+                  )
+                })}
 
-          {/* Feeder pipes */}
-          <Cylinder ref={addMeshRef} args={[0.05, 0.05, 2, 12]} position={[-4.5, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-            <meshStandardMaterial color="#6b7280" metalness={0.8} roughness={0.2} />
-          </Cylinder>
-          <Cylinder ref={addMeshRef} args={[0.05, 0.05, 2, 12]} position={[4.5, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-            <meshStandardMaterial color="#6b7280" metalness={0.8} roughness={0.2} />
-          </Cylinder>
-        </group>
-      ))}
+                {/* Spacer grids */}
+                <Torus ref={addMeshRef} args={[0.04, 0.002, 8, 16]} rotation={[Math.PI / 2, 0, 0]}>
+                  <meshStandardMaterial color="#6b7280" metalness={0.8} roughness={0.2} />
+                </Torus>
+              </group>
+            ))}
+          </group>
+        )
+      })}
 
-      {controlRods.map((rod, index) => (
-        <group key={`control-${index}`} position={rod.position.toArray()}>
-          {/* Control rod assembly - neutron absorbing material */}
-          <Cylinder ref={addMeshRef} args={[0.045, 0.045, 5.5, 16]} position={[0, 2.75, 0]} castShadow>
-            <meshStandardMaterial
-              color="#1f2937"
-              metalness={0.95}
-              roughness={0.05}
-              emissive="#111827"
-              emissiveIntensity={0.1}
-            />
-          </Cylinder>
+      {controlRods.map((rod, index) => {
+        if (!rod?.position) return null
 
-          {/* Control rod guide tube */}
-          <Cylinder ref={addMeshRef} args={[0.06, 0.06, 8, 16]} position={[0, 4, 0]} castShadow>
-            <meshStandardMaterial color="#4b5563" metalness={0.8} roughness={0.2} transparent opacity={0.7} />
-          </Cylinder>
+        const rodPosition = rod.position.toArray ? rod.position.toArray() : [0, 0, 0]
 
-          {/* Drive mechanism housing */}
-          <Box ref={addMeshRef} args={[0.4, 0.6, 0.4]} position={[0, 8.5, 0]} castShadow>
-            <meshStandardMaterial color="#374151" metalness={0.7} roughness={0.3} />
-          </Box>
+        return (
+          <group key={`control-${index}`} position={rodPosition}>
+            {/* Control rod assembly - neutron absorbing material */}
+            <Cylinder ref={addMeshRef} args={[0.045, 0.045, 5.5, 16]} position={[0, 2.75, 0]} castShadow>
+              <meshStandardMaterial
+                color="#1f2937"
+                metalness={0.95}
+                roughness={0.05}
+                emissive="#111827"
+                emissiveIntensity={0.1}
+              />
+            </Cylinder>
 
-          {/* Drive motor */}
-          <Cylinder ref={addMeshRef} args={[0.15, 0.15, 0.3, 16]} position={[0, 9.2, 0]} castShadow>
-            <meshStandardMaterial color="#1f2937" metalness={0.9} roughness={0.1} />
-          </Cylinder>
+            {/* Control rod guide tube */}
+            <Cylinder ref={addMeshRef} args={[0.06, 0.06, 8, 16]} position={[0, 4, 0]} castShadow>
+              <meshStandardMaterial color="#4b5563" metalness={0.8} roughness={0.2} transparent opacity={0.7} />
+            </Cylinder>
 
-          {/* Position indicator */}
-          <Box ref={addMeshRef} args={[0.1, 0.1, 0.05]} position={[0.25, 8.5, 0]} castShadow>
-            <meshStandardMaterial
-              color="#22c55e"
-              metalness={0.7}
-              roughness={0.3}
-              emissive="#16a34a"
-              emissiveIntensity={0.5}
-            />
-          </Box>
-        </group>
-      ))}
+            {/* Drive mechanism housing */}
+            <Box ref={addMeshRef} args={[0.4, 0.6, 0.4]} position={[0, 8.5, 0]} castShadow>
+              <meshStandardMaterial color="#374151" metalness={0.7} roughness={0.3} />
+            </Box>
+
+            {/* Drive motor */}
+            <Cylinder ref={addMeshRef} args={[0.15, 0.15, 0.3, 16]} position={[0, 9.2, 0]} castShadow>
+              <meshStandardMaterial color="#1f2937" metalness={0.9} roughness={0.1} />
+            </Cylinder>
+
+            {/* Position indicator */}
+            <Box ref={addMeshRef} args={[0.1, 0.1, 0.05]} position={[0.25, 8.5, 0]} castShadow>
+              <meshStandardMaterial
+                color="#22c55e"
+                metalness={0.7}
+                roughness={0.3}
+                emissive="#16a34a"
+                emissiveIntensity={0.5}
+              />
+            </Box>
+          </group>
+        )
+      })}
 
       {Array.from({ length: 2 }, (_, i) => {
         const xPos = i === 0 ? -15 : 15

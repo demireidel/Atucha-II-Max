@@ -228,22 +228,25 @@ export default function AtucharIIVisualization() {
                   <Suspense fallback={null}>
                     <Preload all />
 
-                    {/* Lighting */}
-                    <ambientLight intensity={0.3} />
-                    {enableShadows && (
-                      <directionalLight
-                        position={[100, 100, 50]}
-                        intensity={1}
-                        castShadow
-                        shadow-mapSize-width={shadowMapSize}
-                        shadow-mapSize-height={shadowMapSize}
-                        shadow-camera-far={200}
-                        shadow-camera-left={-50}
-                        shadow-camera-right={50}
-                        shadow-camera-top={50}
-                        shadow-camera-bottom={-50}
-                      />
-                    )}
+                    <ambientLight intensity={0.4} color="#f8fafc" />
+                    <directionalLight
+                      position={[50, 80, 30]}
+                      intensity={1.2}
+                      color="#ffffff"
+                      castShadow={enableShadows}
+                      shadow-mapSize-width={shadowMapSize}
+                      shadow-mapSize-height={shadowMapSize}
+                      shadow-camera-far={300}
+                      shadow-camera-left={-80}
+                      shadow-camera-right={80}
+                      shadow-camera-top={80}
+                      shadow-camera-bottom={-80}
+                      shadow-bias={-0.0001}
+                    />
+                    {/* Additional fill light */}
+                    <directionalLight position={[-30, 40, -20]} intensity={0.6} color="#e0f2fe" />
+                    {/* Rim light for better definition */}
+                    <directionalLight position={[0, 20, -50]} intensity={0.8} color="#fef3c7" />
 
                     {/* Environment */}
                     <Environment preset="warehouse" />
