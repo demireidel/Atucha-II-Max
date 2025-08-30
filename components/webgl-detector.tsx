@@ -30,7 +30,6 @@ export function WebGLDetector({ onCapabilitiesDetected, children }: WebGLDetecto
   useEffect(() => {
     const detectWebGL = () => {
       try {
-        // Test WebGL 1.0
         const canvas = document.createElement("canvas")
         const gl =
           canvas.getContext("webgl", {
@@ -53,13 +52,9 @@ export function WebGLDetector({ onCapabilitiesDetected, children }: WebGLDetecto
               throw new Error("WebGL context not fully initialized")
             }
 
-            // Test WebGL 2.0
-            const gl2 = canvas.getContext("webgl2")
-
-            // Get capabilities with error handling for each parameter
             const caps: WebGLCapabilities = {
               webgl: !!gl,
-              webgl2: !!gl2,
+              webgl2: false, // Force WebGL 1.0 only
               maxTextureSize: gl.getParameter(gl.MAX_TEXTURE_SIZE) || 1024,
               maxRenderbufferSize: gl.getParameter(gl.MAX_RENDERBUFFER_SIZE) || 1024,
               maxVertexUniforms: gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS) || 128,

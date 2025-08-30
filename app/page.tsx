@@ -214,6 +214,16 @@ export default function AtucharIIVisualization() {
                     preserveDrawingBuffer: false,
                     stencil: false,
                   }}
+                  onCreated={({ gl }) => {
+                    try {
+                      // Only log renderer info if getParameter is available
+                      if (gl && typeof gl.getParameter === "function") {
+                        console.log("[v0] R3F Canvas initialized successfully")
+                      }
+                    } catch (error) {
+                      console.warn("[v0] Canvas context info unavailable:", error)
+                    }
+                  }}
                 >
                   <Suspense fallback={null}>
                     <Preload all />
