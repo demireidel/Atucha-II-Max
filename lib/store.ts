@@ -74,7 +74,7 @@ export const useNuclearStore = create<NuclearStore>((set, get) => ({
   // Performance settings
   qualityLevel: 3, // High by default
   enableShadows: true,
-  enablePostProcessing: false,
+  enablePostProcessing: true,
   lodDistance: 100,
 
   performanceMetrics: {

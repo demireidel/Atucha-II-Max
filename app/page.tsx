@@ -1,7 +1,6 @@
 "use client"
 
 import { Suspense, useState, useCallback, useEffect } from "react"
-import { ACESFilmicToneMapping, SRGBColorSpace, PCFSoftShadowMap } from "three"
 import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -86,26 +85,6 @@ const TourCameraController = dynamic(
   },
 )
 
-const ContactShadows = dynamic(() => import("@react-three/drei").then((mod) => ({ default: mod.ContactShadows })), {
-  ssr: false,
-})
-const MeshReflectorMaterial = dynamic(
-  () => import("@react-three/drei").then((mod) => ({ default: mod.MeshReflectorMaterial })),
-  { ssr: false },
-)
-
-const EffectComposer = dynamic(
-  () => import("@react-three/postprocessing").then((mod) => ({ default: mod.EffectComposer })),
-  { ssr: false },
-)
-const Bloom = dynamic(() => import("@react-three/postprocessing").then((mod) => ({ default: mod.Bloom })), {
-  ssr: false,
-})
-const Vignette = dynamic(
-  () => import("@react-three/postprocessing").then((mod) => ({ default: mod.Vignette })),
-  { ssr: false },
-)
-
 interface WebGLCapabilities {
   webgl: boolean
   webgl2: boolean
@@ -123,7 +102,6 @@ export default function AtucharIIVisualization() {
     currentView,
     tourActive,
     enableShadows,
-    enablePostProcessing,
     qualityLevel,
     togglePlayback,
     resetCamera,
@@ -236,30 +214,12 @@ export default function AtucharIIVisualization() {
                     preserveDrawingBuffer: false,
                     stencil: false,
                   }}
-                  onCreated={({ gl, camera }) => {
+                  onCreated={({ gl }) => {
                     try {
-                      const context = typeof (gl as any).getContext === "function" ? (gl as any).getContext() : null
-                      if (context && typeof context.getParameter === "function") {
+                      // Only log renderer info if getParameter is available
+                      if (gl && typeof gl.getParameter === "function") {
                         console.log("[v0] R3F Canvas initialized successfully")
-                      } else {
-                        console.log("[v0] R3F Canvas initialized (no direct WebGL context available)")
                       }
-                      // Configure renderer outputs
-                      try {
-                        ;(gl as any).toneMapping = ACESFilmicToneMapping
-                        ;(gl as any).outputColorSpace = SRGBColorSpace
-                        if ("physicallyCorrectLights" in (gl as any)) {
-                          ;(gl as any).physicallyCorrectLights = true
-                        }
-                        if ((gl as any).shadowMap) {
-                          ;(gl as any).shadowMap.type = PCFSoftShadowMap
-                        }
-                        // Slightly increase exposure for clarity
-                        if ("toneMappingExposure" in (gl as any)) {
-                          ;(gl as any).toneMappingExposure = 1.1
-                        }
-                        camera.lookAt(0, 12, 0)
-                      } catch {}
                     } catch (error) {
                       console.warn("[v0] Canvas context info unavailable:", error)
                     }
@@ -268,13 +228,10 @@ export default function AtucharIIVisualization() {
                   <Suspense fallback={null}>
                     <Preload all />
 
-                    <color attach="background" args={["#0f172a"]} />
-
-                    <hemisphereLight intensity={0.7} color="#e0f2fe" groundColor="#fef3c7" />
-                    <ambientLight intensity={0.45} color="#f8fafc" />
+                    <ambientLight intensity={0.4} color="#f8fafc" />
                     <directionalLight
                       position={[50, 80, 30]}
-                      intensity={1.6}
+                      intensity={1.2}
                       color="#ffffff"
                       castShadow={enableShadows}
                       shadow-mapSize-width={shadowMapSize}
@@ -297,40 +254,14 @@ export default function AtucharIIVisualization() {
                       args={[200, 200]}
                       position={[0, -0.1, 0]}
                       cellSize={5}
-                      cellThickness={0.4}
-                      cellColor="#22c55e"
+                      cellThickness={0.5}
+                      cellColor="#4ade80"
                       sectionSize={25}
                       sectionThickness={1}
                       sectionColor="#22c55e"
                       fadeDistance={100}
                       fadeStrength={1}
                     />
-
-                    <ContactShadows position={[0, -0.05, 0]} opacity={0.65} scale={140} blur={2} far={80} />
-
-                    {/* Subtle reflective ground for grounding objects */}
-                    <mesh position={[0, -0.051, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-                      <planeGeometry args={[200, 200]} />
-                      <MeshReflectorMaterial
-                        mirror={0.2}
-                        blur={[150, 40]}
-                        mixBlur={0.5}
-                        mixStrength={1}
-                        roughness={0.9}
-                        metalness={0}
-                        depthScale={0.2}
-                        minDepthThreshold={0.9}
-                        maxDepthThreshold={1}
-                        color="#0b1220"
-                      />
-                    </mesh>
-
-                    {enablePostProcessing && (
-                      <EffectComposer>
-                        <Bloom mipmapBlur intensity={0.35} luminanceThreshold={0.85} luminanceSmoothing={0.1} radius={0.5} />
-                        <Vignette eskil={false} offset={0.18} darkness={0.5} />
-                      </EffectComposer>
-                    )}
 
                     {/* Nuclear Plant Model */}
                     <NuclearPlant />
@@ -348,8 +279,6 @@ export default function AtucharIIVisualization() {
                       minDistance={10}
                       maxDistance={200}
                       maxPolarAngle={Math.PI / 2}
-                      target={[0, 12, 0]}
-                      makeDefault
                       enabled={!tourActive && (typeof window !== "undefined" ? window.innerWidth >= 768 : true)}
                     />
 

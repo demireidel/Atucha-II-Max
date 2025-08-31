@@ -14,7 +14,7 @@ interface ReactorCoreProps {
 export function ReactorCore({ position = [0, 0, 0], scale = 1 }: ReactorCoreProps) {
   const groupRef = useRef<Group>(null)
   const meshRefs = useRef<Mesh[]>([])
-  const { isPlaying, reactorTemperature } = useNuclearStore()
+  const { isPlaying, reactorTemperature, neutronFlux } = useNuclearStore()
 
   useEffect(() => {
     return () => {
@@ -159,7 +159,7 @@ export function ReactorCore({ position = [0, 0, 0], scale = 1 }: ReactorCoreProp
       {pressureTubes.map((tube) => {
         if (!tube?.position) return null
 
-        const tubePosition = (tube.position.toArray ? (tube.position.toArray() as [number, number, number]) : [0, 0, 0]) as [number, number, number]
+        const tubePosition = tube.position.toArray ? tube.position.toArray() : [0, 0, 0]
 
         return (
           <group key={tube.id} position={tubePosition}>
@@ -252,7 +252,7 @@ export function ReactorCore({ position = [0, 0, 0], scale = 1 }: ReactorCoreProp
       {controlRods.map((rod, index) => {
         if (!rod?.position) return null
 
-        const rodPosition = (rod.position.toArray ? (rod.position.toArray() as [number, number, number]) : [0, 0, 0]) as [number, number, number]
+        const rodPosition = rod.position.toArray ? rod.position.toArray() : [0, 0, 0]
 
         return (
           <group key={`control-${index}`} position={rodPosition}>

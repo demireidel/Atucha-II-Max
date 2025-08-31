@@ -47,20 +47,19 @@ export function WebGLDetector({ onCapabilitiesDetected, children }: WebGLDetecto
 
         const checkContextReady = () => {
           try {
-            // Narrow context type to WebGLRenderingContext
-            const webgl = gl as unknown as WebGLRenderingContext
-            if (typeof webgl.getParameter !== "function") {
+            // Test if gl.getParameter is available
+            if (typeof gl.getParameter !== "function") {
               throw new Error("WebGL context not fully initialized")
             }
 
             const caps: WebGLCapabilities = {
-              webgl: !!webgl,
+              webgl: !!gl,
               webgl2: false, // Force WebGL 1.0 only
-              maxTextureSize: webgl.getParameter(webgl.MAX_TEXTURE_SIZE) || 1024,
-              maxRenderbufferSize: webgl.getParameter(webgl.MAX_RENDERBUFFER_SIZE) || 1024,
-              maxVertexUniforms: webgl.getParameter(webgl.MAX_VERTEX_UNIFORM_VECTORS) || 128,
-              maxFragmentUniforms: webgl.getParameter(webgl.MAX_FRAGMENT_UNIFORM_VECTORS) || 128,
-              extensions: webgl.getSupportedExtensions() || [],
+              maxTextureSize: gl.getParameter(gl.MAX_TEXTURE_SIZE) || 1024,
+              maxRenderbufferSize: gl.getParameter(gl.MAX_RENDERBUFFER_SIZE) || 1024,
+              maxVertexUniforms: gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS) || 128,
+              maxFragmentUniforms: gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS) || 128,
+              extensions: gl.getSupportedExtensions() || [],
             }
 
             // Check for minimum requirements

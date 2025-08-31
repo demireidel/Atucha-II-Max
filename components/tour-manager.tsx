@@ -12,8 +12,8 @@ const tourSteps = [
   {
     title: "Welcome to Atucha II",
     description: "Argentina's third nuclear power reactor and first Siemens PHWR design",
-    cameraPosition: [50, 30, 50] as [number, number, number],
-    cameraTarget: [0, 15, 0] as [number, number, number],
+    cameraPosition: [50, 30, 50],
+    cameraTarget: [0, 15, 0],
     view: "overview" as const,
     content:
       "Atucha II is a unique Siemens-designed Pressurized Heavy Water Reactor (PHWR) located in Lima, Buenos Aires Province, Argentina. With a net capacity of 693 MWe, it represents a significant achievement in nuclear technology.",
@@ -21,8 +21,8 @@ const tourSteps = [
   {
     title: "Reactor Containment",
     description: "Reinforced concrete containment structure with steel dome",
-    cameraPosition: [25, 25, 25] as [number, number, number],
-    cameraTarget: [0, 15, 0] as [number, number, number],
+    cameraPosition: [25, 25, 25],
+    cameraTarget: [0, 15, 0],
     view: "overview" as const,
     content:
       "The containment building houses the reactor and provides multiple barriers against radiation release. The reinforced concrete structure with its distinctive dome is designed to withstand extreme conditions.",
@@ -30,8 +30,8 @@ const tourSteps = [
   {
     title: "PHWR Reactor Core",
     description: "Heavy water moderated and cooled reactor with pressure tubes",
-    cameraPosition: [15, 10, 15] as [number, number, number],
-    cameraTarget: [0, 5, 0] as [number, number, number],
+    cameraPosition: [15, 10, 15],
+    cameraTarget: [0, 5, 0],
     view: "reactor" as const,
     content:
       "The reactor core contains 451 pressure tubes arranged in a square lattice within the calandria vessel. Heavy water serves as both moderator and coolant, allowing the use of natural uranium fuel.",
@@ -39,8 +39,8 @@ const tourSteps = [
   {
     title: "Pressure Tube System",
     description: "Individual pressure tubes containing fuel bundles",
-    cameraPosition: [8, 5, 8] as [number, number, number],
-    cameraTarget: [0, 0, 0] as [number, number, number],
+    cameraPosition: [8, 5, 8],
+    cameraTarget: [0, 0, 0],
     view: "reactor" as const,
     content:
       "Each pressure tube contains 12 fuel bundles. The pressure tubes are made of zirconium alloy and operate at high pressure and temperature, allowing efficient heat transfer to the steam generators.",
@@ -48,8 +48,8 @@ const tourSteps = [
   {
     title: "Control Room Operations",
     description: "Main control room with advanced monitoring systems",
-    cameraPosition: [0, 3, 8] as [number, number, number],
-    cameraTarget: [0, 2, 0] as [number, number, number],
+    cameraPosition: [0, 3, 8],
+    cameraTarget: [0, 2, 0],
     view: "control-room" as const,
     content:
       "The control room features state-of-the-art monitoring and control systems. Operators monitor reactor parameters, control rod positions, and safety systems from this central location.",
@@ -57,8 +57,8 @@ const tourSteps = [
   {
     title: "Safety Systems",
     description: "Multiple independent safety systems ensure safe operation",
-    cameraPosition: [-5, 3, 5] as [number, number, number],
-    cameraTarget: [-12, 2, -5] as [number, number, number],
+    cameraPosition: [-5, 3, 5],
+    cameraTarget: [-12, 2, -5],
     view: "control-room" as const,
     content:
       "Atucha II incorporates multiple safety systems including emergency core cooling, containment spray systems, and redundant shutdown systems to ensure safe operation under all conditions.",

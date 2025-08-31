@@ -18,6 +18,7 @@ export function NuclearPlant() {
         color: "#f3f4f6",
         metalness: 0.0,
         roughness: 0.95,
+        normalScale: [0.5, 0.5] as [number, number],
       },
       steel: {
         color: "#9ca3af",
@@ -72,7 +73,7 @@ export function NuclearPlant() {
   }
 
   return (
-    <group ref={groupRef} scale={1.4}>
+    <group ref={groupRef}>
       <group position={[0, 15, 0]}>
         {/* Main containment structure */}
         <Cylinder args={[20, 20, 30, 64]} position={[0, 0, 0]} castShadow receiveShadow>
@@ -195,10 +196,10 @@ export function NuclearPlant() {
         </Cylinder>
       </group>
 
-      {([
-        [-30, 25, 20] as [number, number, number],
-        [-30, 25, -20] as [number, number, number],
-      ]).map((pos, index) => (
+      {[
+        [-30, 25, 20],
+        [-30, 25, -20],
+      ].map((pos, index) => (
         <group key={index} position={pos}>
           {/* Main tower structure with hyperboloid shape */}
           <Cylinder args={[8, 12, 50, 32]} castShadow receiveShadow>
@@ -211,7 +212,7 @@ export function NuclearPlant() {
           </Cylinder>
 
           {/* Steam plume with better animation */}
-          <Cylinder args={[6, 4, 10, 16]} position={[0, 30, 0]}>
+          <Cylinder args={[6, 4, 10, 16]} position={[0, 30, 0]} transparent>
             <meshStandardMaterial {...materials.steam} />
           </Cylinder>
 
@@ -259,7 +260,14 @@ export function NuclearPlant() {
         </Cylinder>
       ))}
 
-      <Text position={[0, 45, 0]} fontSize={4} color="#10b981" anchorX="center" anchorY="middle">
+      <Text
+        position={[0, 45, 0]}
+        fontSize={4}
+        color="#10b981"
+        anchorX="center"
+        anchorY="middle"
+        font="/fonts/inter-bold.woff"
+      >
         Atucha II Nuclear Power Plant
       </Text>
 
