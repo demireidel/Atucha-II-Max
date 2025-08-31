@@ -196,10 +196,10 @@ export function NuclearPlant() {
         </Cylinder>
       </group>
 
-      {[
-        [-30, 25, 20],
-        [-30, 25, -20],
-      ].map((pos, index) => (
+      {([
+        [-30, 25, 20] as [number, number, number],
+        [-30, 25, -20] as [number, number, number],
+      ]).map((pos, index) => (
         <group key={index} position={pos}>
           {/* Main tower structure with hyperboloid shape */}
           <Cylinder args={[8, 12, 50, 32]} castShadow receiveShadow>
@@ -212,7 +212,7 @@ export function NuclearPlant() {
           </Cylinder>
 
           {/* Steam plume with better animation */}
-          <Cylinder args={[6, 4, 10, 16]} position={[0, 30, 0]} transparent>
+          <Cylinder args={[6, 4, 10, 16]} position={[0, 30, 0]}>
             <meshStandardMaterial {...materials.steam} />
           </Cylinder>
 

@@ -216,9 +216,11 @@ export default function AtucharIIVisualization() {
                   }}
                   onCreated={({ gl }) => {
                     try {
-                      // Only log renderer info if getParameter is available
-                      if (gl && typeof gl.getParameter === "function") {
+                      const context = typeof (gl as any).getContext === "function" ? (gl as any).getContext() : null
+                      if (context && typeof context.getParameter === "function") {
                         console.log("[v0] R3F Canvas initialized successfully")
+                      } else {
+                        console.log("[v0] R3F Canvas initialized (no direct WebGL context available)")
                       }
                     } catch (error) {
                       console.warn("[v0] Canvas context info unavailable:", error)
