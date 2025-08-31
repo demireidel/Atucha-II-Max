@@ -45,6 +45,32 @@ const Perf = dynamic(() => import("r3f-perf").then((mod) => ({ default: mod.Perf
   ssr: false,
 })
 
+const EffectComposer = dynamic(
+  () => import("@react-three/postprocessing").then((mod) => ({ default: mod.EffectComposer })),
+  {
+    ssr: false,
+  },
+)
+
+const Bloom = dynamic(() => import("@react-three/postprocessing").then((mod) => ({ default: mod.Bloom })), {
+  ssr: false,
+})
+
+const ToneMapping = dynamic(() => import("@react-three/postprocessing").then((mod) => ({ default: mod.ToneMapping })), {
+  ssr: false,
+})
+
+const Vignette = dynamic(() => import("@react-three/postprocessing").then((mod) => ({ default: mod.Vignette })), {
+  ssr: false,
+})
+
+const ChromaticAberration = dynamic(
+  () => import("@react-three/postprocessing").then((mod) => ({ default: mod.ChromaticAberration })),
+  {
+    ssr: false,
+  },
+)
+
 const NuclearPlant = dynamic(
   () => import("@/components/nuclear-plant").then((mod) => ({ default: mod.NuclearPlant })),
   {
@@ -130,22 +156,28 @@ export default function AtucharIIVisualization() {
       /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
     if (isMobile || capabilities.maxTextureSize < 2048) {
-      useNuclearStore.getState().setQualityLevel(1)
-      console.log("[v0] Set quality to low for mobile/limited hardware")
-    } else if (capabilities.maxTextureSize < 4096) {
       useNuclearStore.getState().setQualityLevel(2)
-      console.log("[v0] Set quality to medium for mid-range hardware")
+      console.log("[v0] Set quality to medium for mobile/limited hardware")
+    } else if (capabilities.maxTextureSize < 4096) {
+      useNuclearStore.getState().setQualityLevel(4)
+      console.log("[v0] Set quality to high for mid-range hardware")
     } else {
-      console.log("[v0] High-end hardware detected, maintaining high quality")
+      useNuclearStore.getState().setQualityLevel(5)
+      console.log("[v0] Ultra-high quality enabled for high-end hardware")
     }
   }, [])
 
   const shadowMapSize = webglCapabilities?.maxTextureSize
-    ? Math.min(qualityLevel >= 3 ? 2048 : qualityLevel >= 2 ? 1024 : 512, webglCapabilities.maxTextureSize / 2)
-    : 512
+    ? Math.min(
+        qualityLevel >= 4 ? 4096 : qualityLevel >= 3 ? 2048 : qualityLevel >= 2 ? 1024 : 512,
+        webglCapabilities.maxTextureSize / 2,
+      )
+    : 1024
 
   const pixelRatio =
-    isClient && typeof window !== "undefined" ? Math.min(qualityLevel >= 4 ? 2 : 1, window.devicePixelRatio || 1) : 1
+    isClient && typeof window !== "undefined"
+      ? Math.min(qualityLevel >= 4 ? 2.5 : qualityLevel >= 3 ? 2 : 1, window.devicePixelRatio || 1)
+      : 1
 
   if (!isClient || hasError) {
     return <LoadingScreen />
@@ -207,18 +239,34 @@ export default function AtucharIIVisualization() {
                   className="bg-background"
                   dpr={pixelRatio}
                   gl={{
-                    antialias: qualityLevel >= 2 && webglCapabilities?.maxRenderbufferSize >= 1024,
+                    antialias: true,
                     alpha: false,
                     powerPreference: "high-performance",
                     failIfMajorPerformanceCaveat: false,
                     preserveDrawingBuffer: false,
-                    stencil: false,
+                    stencil: true,
+                    depth: true,
+                    logarithmicDepthBuffer: qualityLevel >= 4,
+                    precision: "highp",
                   }}
-                  onCreated={({ gl }) => {
+                  onCreated={({ gl, scene, camera }) => {
                     try {
-                      // Only log renderer info if getParameter is available
                       if (gl && typeof gl.getParameter === "function") {
-                        console.log("[v0] R3F Canvas initialized successfully")
+                        gl.shadowMap.enabled = enableShadows
+                        gl.shadowMap.type = qualityLevel >= 4 ? 2 : 1 // PCF or Basic
+                        gl.outputColorSpace = "srgb"
+                        gl.toneMapping = 4 // ACESFilmicToneMapping
+                        gl.toneMappingExposure = 1.2
+                        gl.physicallyCorrectLights = true
+
+                        // Enable anisotropic filtering if available
+                        const anisotropy = gl.getExtension("EXT_texture_filter_anisotropic")
+                        if (anisotropy) {
+                          const maxAnisotropy = gl.getParameter(anisotropy.MAX_TEXTURE_MAX_ANISOTROPY_EXT)
+                          gl.maxAnisotropy = Math.min(16, maxAnisotropy)
+                        }
+
+                        console.log("[v0] Maximum quality renderer initialized")
                       }
                     } catch (error) {
                       console.warn("[v0] Canvas context info unavailable:", error)
@@ -228,39 +276,58 @@ export default function AtucharIIVisualization() {
                   <Suspense fallback={null}>
                     <Preload all />
 
-                    <ambientLight intensity={0.4} color="#f8fafc" />
+                    <ambientLight intensity={0.3} color="#f1f5f9" />
+
+                    {/* Primary sun light */}
                     <directionalLight
-                      position={[50, 80, 30]}
-                      intensity={1.2}
+                      position={[100, 120, 60]}
+                      intensity={2.5}
                       color="#ffffff"
                       castShadow={enableShadows}
                       shadow-mapSize-width={shadowMapSize}
                       shadow-mapSize-height={shadowMapSize}
-                      shadow-camera-far={300}
-                      shadow-camera-left={-80}
-                      shadow-camera-right={80}
-                      shadow-camera-top={80}
-                      shadow-camera-bottom={-80}
-                      shadow-bias={-0.0001}
+                      shadow-camera-far={500}
+                      shadow-camera-left={-120}
+                      shadow-camera-right={120}
+                      shadow-camera-top={120}
+                      shadow-camera-bottom={-120}
+                      shadow-bias={-0.00005}
+                      shadow-normalBias={0.02}
+                      shadow-radius={qualityLevel >= 4 ? 8 : 4}
                     />
-                    {/* Additional fill light */}
-                    <directionalLight position={[-30, 40, -20]} intensity={0.6} color="#e0f2fe" />
-                    {/* Rim light for better definition */}
-                    <directionalLight position={[0, 20, -50]} intensity={0.8} color="#fef3c7" />
 
-                    {/* Environment */}
-                    <Environment preset="warehouse" />
+                    {/* Secondary fill lights for realistic illumination */}
+                    <directionalLight position={[-80, 60, -40]} intensity={1.2} color="#e0f2fe" />
+                    <directionalLight position={[40, 80, -80]} intensity={1.0} color="#fef3c7" />
+                    <directionalLight position={[0, 40, 100]} intensity={0.8} color="#f0f9ff" />
+
+                    {/* Accent lighting for depth */}
+                    <pointLight position={[0, 50, 0]} intensity={1.5} color="#ffffff" distance={200} decay={2} />
+                    <spotLight
+                      position={[60, 80, 60]}
+                      intensity={2.0}
+                      angle={Math.PI / 6}
+                      penumbra={0.5}
+                      color="#ffffff"
+                      castShadow={enableShadows && qualityLevel >= 3}
+                      shadow-mapSize-width={shadowMapSize / 2}
+                      shadow-mapSize-height={shadowMapSize / 2}
+                    />
+
+                    <Environment preset="warehouse" background={false} environmentIntensity={0.8} />
+
                     <Grid
-                      args={[200, 200]}
-                      position={[0, -0.1, 0]}
-                      cellSize={5}
-                      cellThickness={0.5}
-                      cellColor="#4ade80"
+                      args={[300, 300]}
+                      position={[0, -0.05, 0]}
+                      cellSize={2.5}
+                      cellThickness={0.8}
+                      cellColor="#10b981"
                       sectionSize={25}
-                      sectionThickness={1}
-                      sectionColor="#22c55e"
-                      fadeDistance={100}
-                      fadeStrength={1}
+                      sectionThickness={1.5}
+                      sectionColor="#059669"
+                      fadeDistance={150}
+                      fadeStrength={0.8}
+                      infiniteGrid={true}
                     />
 
                     {/* Nuclear Plant Model */}
@@ -276,11 +343,47 @@ export default function AtucharIIVisualization() {
                       enablePan={true}
                       enableZoom={true}
                       enableRotate={true}
-                      minDistance={10}
-                      maxDistance={200}
-                      maxPolarAngle={Math.PI / 2}
+                      minDistance={8}
+                      maxDistance={300}
+                      maxPolarAngle={Math.PI / 2.1}
+                      enableDamping={true}
+                      dampingFactor={0.05}
+                      rotateSpeed={0.8}
+                      zoomSpeed={1.2}
+                      panSpeed={1.0}
                       enabled={!tourActive && (typeof window !== "undefined" ? window.innerWidth >= 768 : true)}
                     />
+
+                    {qualityLevel >= 3 && (
+                      <EffectComposer>
+                        <Bloom
+                          intensity={0.4}
+                          luminanceThreshold={0.8}
+                          luminanceSmoothing={0.9}
+                          mipmapBlur={true}
+                          levels={qualityLevel >= 4 ? 9 : 6}
+                          kernelSize={qualityLevel >= 4 ? 5 : 3}
+                        />
+                        <ToneMapping
+                          adaptive={true}
+                          resolution={qualityLevel >= 4 ? 512 : 256}
+                          middleGrey={0.6}
+                          maxLuminance={16.0}
+                          averageLuminance={1.0}
+                          adaptationRate={2.0}
+                        />
+                        {qualityLevel >= 4 && (
+                          <>
+                            <Vignette offset={0.15} darkness={0.3} eskil={false} />
+                            <ChromaticAberration
+                              offset={[0.0005, 0.0012]}
+                              radialModulation={true}
+                              modulationOffset={0.15}
+                            />
+                          </>
+                        )}
+                      </EffectComposer>
+                    )}
 
                     {/* Performance Monitor */}
                     <PerformanceMonitor />
